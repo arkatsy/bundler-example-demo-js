@@ -4,10 +4,15 @@
   "main": "index.mjs",
   "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "bundle": "node ./bundler.js ./test/entry.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "description": ""
+  "description": "",
+  "dependencies": {
+    "acorn": "^8.11.3",
+    "escodegen": "^2.1.0",
+    "estree-walker": "^3.0.3"
+  }
 }
