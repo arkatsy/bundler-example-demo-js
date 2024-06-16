@@ -207,3 +207,31 @@ function PACKAGE_IMPORTS_RESOLVE(specifier, parentURL, conditions) {
 
   throw new PackageImportNotDefined(`Package import not defined: ${packageURL}`);
 }
+
+function PACKAGE_IMPORTS_EXPORTS_RESOLVE(matchKey, matchObj, packageURL, isImports, conditions) {
+  return;
+}
+
+function PATTERN_KEY_COMPARE(keyA, keyB) {
+  return;
+}
+
+function PACKAGE_TARGET_RESOLVE(packageURL, target, patternMatch, isImports, conditions) {
+  return;
+}
+
+function ESM_FILE_FORMAT(url) {
+  return;
+}
+
+function LOOKUP_PACKAGE_SCOPE(url) {
+  return;
+}
+
+function READ_PACKAGE_JSON(packageURL) {
+  return;
+}
+
+function DETECT_MODULE_SYNTAX(source) {
+  return;
+}
