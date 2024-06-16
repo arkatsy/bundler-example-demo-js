@@ -9,6 +9,7 @@ import {
   PackageImportNotDefined,
   InvalidPackageConfiguration,
 } from "./errors";
+import * as acorn from "acorn";
 
 /**
  *
@@ -261,5 +262,28 @@ function READ_PACKAGE_JSON(packageURL) {
 }
 
 function DETECT_MODULE_SYNTAX(source) {
-  return;
+  // 1. Parse source as an ECMAScript module.
+  // 2. If the parse is successful, then
+  // 2.1 If source contains top-level await, static import or export statements, or import.meta, return true.
+  // 2.2 If source contains a top-level lexical declaration (const, let, or class) of any of the CommonJS wrapper variables (require, exports, module, __filename, or __dirname) then return true.
+  // 3. Else return false.
+
+  // TODO: Handle errors
+  let ast = acorn.parse(source, { sourceType: "module", ecmaVersion: 2022 });
+
+  // Detect ESM
+  const hasTopLevelAwait = ast.body.some(
+    (node) => node.type === "ExpressionStatement" && node.expression.type === "AwaitExpression"
+  );
+  const hasStaticImport = ast.body.some((node) => node.type === "ImportDeclaration");
+  const hasExport = ast.body.some((node) => node.type === "ExportNamedDeclaration" || node.type === "ExportDefaultDeclaration");
+  const hasImportMeta = ast.body.some(
+    (node) => node.type === "MetaProperty" && node.meta.name === "import" && node.property.name === "meta"
+  );
+
+  if (hasTopLevelAwait || hasStaticImport || hasExport || hasImportMeta) return true;
+
+  // Detect CJS
+  // TODO
+  return false;
 }
