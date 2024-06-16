@@ -1,6 +1,7 @@
-import fs, { lstatSync } from "node:fs";
+import fs from "node:fs";
 import module from "node:module";
 import { includesAny, isValidURL } from "./helpers";
+import { ModuleNotFound, InvalidModuleSpecifier, UnsupportedDirectoryImport } from "./errors";
 
 /**
  *
@@ -31,7 +32,7 @@ function ESM_RESOLVE(specifier, parentURL) {
       throw new InvalidModuleSpecifier(`Found %2F or %5C in resolved URL: ${resolved}`);
     }
 
-    if (fs.existsSync(resolved) && lstatSync(resolved).isDirectory()) {
+    if (fs.existsSync(resolved) && fs.lstatSync(resolved).isDirectory()) {
       // 7.2 If the file at resolved is a directory,
       // then throw an Unsupported Directory Import error.
       throw new UnsupportedDirectoryImport(`Directory imports are not supported: ${resolved}`);
