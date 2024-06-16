@@ -9,4 +9,14 @@ function isValidURL(specifier) {
   return validProtocols.some((v) => specifier.startsWith(v));
 }
 
-export { isValidURL };
+/**
+ * 
+ * @param {string} str 
+ * @param {string[]} arr 
+ * @returns {boolean} Whether the string includes any of the elements in the array
+ */
+function includesAny(str, arr) {
+  return arr.some((v) => str.includes(v));
+}
+
+export { isValidURL, includesAny };
