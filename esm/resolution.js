@@ -1,7 +1,13 @@
 import fs from "node:fs";
 import module from "node:module";
 import { includesAny, isValidURL } from "./helpers";
-import { ModuleNotFound, InvalidModuleSpecifier, UnsupportedDirectoryImport, PackagePathNotExported } from "./errors";
+import {
+  ModuleNotFound,
+  InvalidModuleSpecifier,
+  UnsupportedDirectoryImport,
+  PackagePathNotExported,
+  PackageImportNotDefined,
+} from "./errors";
 
 /**
  *
@@ -180,4 +186,24 @@ function PACKAGE_EXPORTS_RESOLVE(packageURL, subpath, exports, conditions) {
     }
   }
   throw new PackagePathNotExported(`Package path not exported: ${packageURL}`);
+}
+
+function PACKAGE_IMPORTS_RESOLVE(specifier, parentURL, conditions) {
+  if (specifier.startsWith("#")) throw new InvalidModuleSpecifier(`Invalid package specifier: ${specifier}`);
+  let packageURL = LOOK_UP_PACKAGE_SCOPE(parentURL);
+  if (packageJSON) {
+    let pjson = READ_PACKAGE_JSON(packageURL);
+
+    // 4.2 If pjson.imports is a non-null Object, then
+    // Let resolved be the result of PACKAGE_IMPORTS_EXPORTS_RESOLVE( specifier, pjson.imports, packageURL, true, conditions).
+    // If resolved is not null or undefined, return resolved.
+
+    // NOTE: Unsure what 'non-null' Object means
+    if (pjson.imports && typeof pjson.imports) {
+      let resolved = PACKAGE_IMPORTS_EXPORTS_RESOLVE(specifier, pjson.imports, packageURL, true, conditions);
+      if (resolved) return resolved;
+    }
+  }
+
+  throw new PackageImportNotDefined(`Package import not defined: ${packageURL}`);
 }
