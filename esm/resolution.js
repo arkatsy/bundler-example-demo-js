@@ -213,7 +213,23 @@ function PACKAGE_IMPORTS_EXPORTS_RESOLVE(matchKey, matchObj, packageURL, isImpor
 }
 
 function PATTERN_KEY_COMPARE(keyA, keyB) {
-  return;
+  function containsOnlyOnce(str, char) {
+    return str.indexOf(char) === str.lastIndexOf(char);
+  }
+  if (!(containsOnlyOnce(keyA, "*") && containsOnlyOnce(keyB, "*"))) {
+    throw new Error("Pattern keys must contain only one * character");
+  }
+
+  let baseLengthA = keyA.indexOf("*");
+  let baseLengthB = keyB.indexOf("*");
+
+  if (baseLengthA > baseLengthB) return -1;
+  if (baseLengthA < baseLengthB) return 1;
+
+  if (keyA.length > keyB.length) return -1;
+  if (keyA.length < keyB.length) return 1;
+
+  return 0;
 }
 
 function PACKAGE_TARGET_RESOLVE(packageURL, target, patternMatch, isImports, conditions) {
