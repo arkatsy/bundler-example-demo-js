@@ -130,3 +130,15 @@ function PACKAGE_RESOLVE(packageSpecifier, parentURL) {
   }
   throw new ModuleNotFound(`Module not found: ${packageSpecifier}`);
 }
+
+function PACKAGE_SELF_RESOLVE(packageName, packageSubpath, parentURL) {
+  let packageURL = LOOK_UP_PACKAGE_JSON(parentURL);
+  if (!packageURL) return;
+
+  let pjson = READ_PACKAGE_JSON(parentURL);
+  if (!pjson || !pjson.exports) return;
+
+  if (pjson.name === packageName) {
+    return PACKAGE_EXPORTS_RESOLVE(packageURL, packageSubpath, pjson.exports, defaultConditions);
+  } else return;
+}
