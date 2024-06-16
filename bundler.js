@@ -8,17 +8,23 @@ const entryFile = process.argv.slice(2)[0];
 const workingDir = path.resolve(path.dirname(entryFile));
 const outDir = path.join(workingDir, "dist");
 
-const moduleGraph = resolveModule(path.resolve(entryFile));
+const moduleGraph = createModuleGraph(path.resolve(entryFile));
+console.dir(moduleGraph, { depth: null });
 
-// NOTE: `entry` is a file path
-function resolveModule(entry) {
-  console.log("[module]: ", entry);
+function createModuleGraph(entry) {
+  const graphNode = {
+    file: entry,
+    imports: null,
+  };
+
   const source = fs.readFileSync(entry, "utf-8");
   const imports = acorn.parse(source, parserOpts).body.filter((node) => node.type === "ImportDeclaration");
-  imports.forEach((node) => {
+
+  graphNode.imports = imports.map((node) => {
     const specifier = node.source.value;
-    // NOTE: Doesn't handle node_modules
     const modulePath = path.resolve(workingDir, path.basename(specifier));
-    resolveModule(modulePath);
+    return createModuleGraph(modulePath);
   });
+
+  return graphNode;
 }
