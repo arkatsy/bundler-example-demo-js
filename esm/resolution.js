@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import module from "node:module";
 import { includesAny, isValidURL } from "./helpers";
-import { ModuleNotFound, InvalidModuleSpecifier, UnsupportedDirectoryImport } from "./errors";
+import { ModuleNotFound, InvalidModuleSpecifier, UnsupportedDirectoryImport, PackagePathNotExported } from "./errors";
 
 /**
  *
@@ -141,4 +141,43 @@ function PACKAGE_SELF_RESOLVE(packageName, packageSubpath, parentURL) {
   if (pjson.name === packageName) {
     return PACKAGE_EXPORTS_RESOLVE(packageURL, packageSubpath, pjson.exports, defaultConditions);
   } else return;
+}
+
+function PACKAGE_EXPORTS_RESOLVE(packageURL, subpath, exports, conditions) {
+  // If exports is an Object with both a key starting with "." and a key not starting with ".", throw an Invalid Package Configuration error.
+  if (typeof exports === "object") {
+    const props = Object.getOwnPropertyNames(exports);
+    let dotProp = props.find((prop) => prop.startsWith("."));
+    let nonDotProp = props.find((prop) => !prop.startsWith("."));
+    if (dotProp && nonDotProp) {
+      throw new InvalidPackageConfiguration(`Invalid package configuration: ${packageURL}`);
+    }
+  }
+
+  if (subpath === ".") {
+    let mainExport;
+    if (typeof exports === "string" || typeof exports === "object") {
+      if (!exports["."]) {
+        // 2.2 If exports is a String or Array, or an Object containing no keys starting with ".", then set mainExport to exports.
+        mainExport = exports;
+      } else if (typeof exports === "object" && exports["."]) {
+        // 2.3 Otherwise if exports is an Object containing a "." property, then set mainExport to exports["."].
+        mainExport = exports["."];
+      }
+
+      if (mainExport) {
+        // 2.4 If mainExport is not undefined, then
+        // Let resolved be the result of PACKAGE_TARGET_RESOLVE( packageURL, mainExport, null, false, conditions).
+        // If resolved is not null or undefined, return resolved.
+        let resolved = PACKAGE_TARGET_RESOLVE(packageURL, mainExport, null, false, conditions);
+        if (resolved) return resolved;
+      }
+    } else if (typeof exports === "object" && Object.keys(exports).every((key) => key.startsWith("."))) {
+      // 3.1 Assert: subpath begins with "./".
+      if (!subpath.startsWith(".")) throw new Error("subpath must begin with ./");
+      let resolved = PACKAGE_IMPORTS_EXPORTS_RESOLVE(subpath, exports, packageURL, false, conditions);
+      if (resolved) return resolved;
+    }
+  }
+  throw new PackagePathNotExported(`Package path not exported: ${packageURL}`);
 }
