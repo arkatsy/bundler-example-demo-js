@@ -7,6 +7,7 @@ import {
   UnsupportedDirectoryImport,
   PackagePathNotExported,
   PackageImportNotDefined,
+  InvalidPackageConfiguration,
 } from "./errors";
 
 /**
@@ -245,7 +246,18 @@ function LOOKUP_PACKAGE_SCOPE(url) {
 }
 
 function READ_PACKAGE_JSON(packageURL) {
-  return;
+  let pjsonURL = new URL("package.json", packageURL).toString();
+  if (!fs.existsSync(pjsonURL)) return null;
+
+  let parsed;
+  try {
+    let contents = fs.readFileSync(pjsonURL, "utf-8");
+    parsed = JSON.parse(contents);
+  } catch (_) {
+    throw new InvalidPackageConfiguration(`Invalid package.json: ${pjsonURL}`);
+  }
+
+  return parsed;
 }
 
 function DETECT_MODULE_SYNTAX(source) {
