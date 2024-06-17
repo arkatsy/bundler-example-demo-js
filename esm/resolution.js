@@ -337,7 +337,7 @@ function PACKAGE_TARGET_RESOLVE(packageURL, target, patternMatch, isImports, con
       }
     }
 
-    //3.3 Return or throw the last fallback resolution null return or error. (NOTE: Unsure about this part)
+    // 3.3 Return or throw the last fallback resolution null return or error. (NOTE: Unsure about this part)
     return null;
   } else if (!target) {
     return null;
@@ -358,7 +358,23 @@ function ESM_FILE_FORMAT(url) {
 }
 
 function LOOKUP_PACKAGE_SCOPE(url) {
-  return;
+  let scopeURL = url;
+  // 2. While scopeURL is not the file system root (unsure if the root is considered the protocol part)
+  while (scopeURL !== "file://") {
+    // 2.1 Set scopeURL to the parent URL of scopeURL.
+    scopeURL = new URL("../", scopeURL).toString();
+
+    // 2.2 If scopeURL ends in a "node_modules" path segment, return null.
+    if (scopeURL.endsWith("node_modules")) return null;
+
+    // 2.3 Let pjsonURL be the resolution of "package.json" within scopeURL.
+    let pjsonURL = new URL("package.json", scopeURL).toString();
+
+    // 2.4 If the file at pjsonURL exists, return scopeURL.
+    if (fs.existsSync(pjsonURL)) return scopeURL;
+
+    return null;
+  }
 }
 
 function READ_PACKAGE_JSON(packageURL) {
