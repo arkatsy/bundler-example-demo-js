@@ -12,6 +12,8 @@ import {
 } from "./errors";
 import * as acorn from "acorn";
 
+const defaultConditions = ["node", "import"];
+
 /**
  *
  * @param {string} specifier
@@ -193,7 +195,7 @@ function PACKAGE_EXPORTS_RESOLVE(packageURL, subpath, exports, conditions) {
 
 function PACKAGE_IMPORTS_RESOLVE(specifier, parentURL, conditions) {
   if (specifier.startsWith("#")) throw new InvalidModuleSpecifier(`Invalid package specifier: ${specifier}`);
-  let packageURL = LOOK_UP_PACKAGE_SCOPE(parentURL);
+  let packageURL = LOOKUP_PACKAGE_SCOPE(parentURL);
   if (packageJSON) {
     let pjson = READ_PACKAGE_JSON(packageURL);
 
@@ -388,11 +390,11 @@ function ESM_FILE_FORMAT(url) {
 
   // 11. If url does not have any extension, then
   // NOTE: maybe we could check for valid extensions (.js, .mjs, .cjs, ...)
-  if(!url.includes(".")) {
+  if (!url.includes(".")) {
     // 11.1 If packageType is "module" and --experimental-wasm-modules is enabled and the file at url contains the header for a WebAssembly module, then return "wasm".
     // TODO
 
-    if(packageType) return packageType;
+    if (packageType) return packageType;
 
     // 11.3 If --experimental-detect-module is enabled and the source of module contains static import or export syntax, then return "module".
     // TODO
