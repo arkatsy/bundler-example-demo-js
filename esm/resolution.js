@@ -211,7 +211,36 @@ function PACKAGE_IMPORTS_RESOLVE(specifier, parentURL, conditions) {
 }
 
 function PACKAGE_IMPORTS_EXPORTS_RESOLVE(matchKey, matchObj, packageURL, isImports, conditions) {
-  return;
+  if (!matchKey.includes("*") && matchObj[matchKey]) {
+    let target = matchObj[matchKey];
+    return PACKAGE_TARGET_RESOLVE(packageURL, target, null, isImports, conditions);
+  }
+
+  // 2. Let expansionKeys be the list of keys of matchObj containing only a single "*", sorted by the sorting function PATTERN_KEY_COMPARE which orders in descending order of specificity.
+  let expansionKeys = Object.getOwnPropertyNames(matchObj)
+    .filter((key) => key.includes("*"))
+    .sort(PATTERN_KEY_COMPARE);
+
+  for (let key of expansionKeys) {
+    // 3.1 Let patternBase be the substring of expansionKey up to but excluding the first "*" character.
+    let patternBase = expansionKeys.split("*")[0];
+
+    // 3.2 If matchKey starts with but is not equal to patternBase, then
+    if (matchKey.startsWith(patternBase) && matchKey !== patternBase) {
+      // 3.2.1 Let patternTrailer be the substring of expansionKey from the index after the first "*" character.
+      let patternTrailer = expansionKey.split("*")[1];
+
+      // 3.2.2 If patternTrailer has zero length, or if matchKey ends with patternTrailer and the length of matchKey is greater than or equal to the length of expansionKey, then
+      if (!patternTrailer.length || (matchKey.endsWith(patternTrailer) && matchKey.length >= expansionKey.length)) {
+        let target = matchObj[expansionKey];
+
+        // 3.2.2.2 Let patternMatch be the substring of matchKey starting at the index of the length of patternBase up to the length of matchKey minus the length of patternTrailer.
+        let patternMatch = matchKey.slice(patternBase.length, matchKey.length - patternTrailer.length);
+        return PACKAGE_TARGET_RESOLVE(packageURL, target, patternMatch, isIMports, conditions);
+      }
+    }
+  }
+  return null;
 }
 
 function PATTERN_KEY_COMPARE(keyA, keyB) {
