@@ -8,6 +8,7 @@ import {
   PackagePathNotExported,
   PackageImportNotDefined,
   InvalidPackageConfiguration,
+  InvalidPackageTarget,
 } from "./errors";
 import * as acorn from "acorn";
 
@@ -264,7 +265,92 @@ function PATTERN_KEY_COMPARE(keyA, keyB) {
 }
 
 function PACKAGE_TARGET_RESOLVE(packageURL, target, patternMatch, isImports, conditions) {
-  return;
+  if (typeof target === "string") {
+    if (!target.startsWith("./")) {
+      if (!isImports || includesAny(target, ["../", "/"]) || isValidURL(target)) {
+        throw InvalidPackageTarget(`Invalid package target: ${target}`);
+      }
+
+      if (typeof patternMatch === "string") {
+        // 1.1.2.1 Return PACKAGE_RESOLVE(target with every instance of "*" replaced by patternMatch, packageURL + "/").
+        return PACKAGE_RESOLVE(target.replace("*", patternMatch), packageURL + "/");
+      }
+
+      return PACKAGE_RESOLVE(target, packageURL + "/");
+    }
+
+    // 1.2 If target split on "/" or "\" contains any "", ".", "..", or "node_modules" segments after the first "." segment, case insensitive and including percent encoded variants, throw an Invalid Package Target error.
+    // NOTE: Unsure about the quotes and the percent encoded variants
+    let forwardSlashSegments = target.split("/");
+    let backSlashSegments = target.split("\\");
+    let forwardSlashAfterDot = forwardSlashSegments
+      .slice(forwardSlashSegments.indexOf(".") + 1)
+      .map((segment) => segment.toLowerCase());
+    let backSlashAfterDot = backSlashSegments.slice(backSlashSegments.indexOf(".") + 1).map((segment) => segment.toLowerCase());
+    if (
+      includesAny(forwardSlashAfterDot, [".", "..", "node_modules"]) ||
+      includesAny(backSlashAfterDot, [".", "..", "node_modules"])
+    ) {
+      throw InvalidModuleSpecifier(`Invalid specifier: ${target}`);
+    }
+
+    // 1.7 Return the URL resolution of resolvedTarget with every instance of "*" replaced with patternMatch.
+    return new URL(target.replace("*", patternMatch), packageURL).toString();
+  } else if (target && typeof target === "object") {
+    // 2.1 If target contains any index property keys, as defined in ECMA-262 6.1.7 Array Index, throw an Invalid Package Configuration error.
+    if (Object.getOwnPropertyNames(target).some(ECMA_262_6_1_7_ARRAY_INDEX)) {
+      throw new InvalidPackageConfiguration(`Invalid package configuration: ${target}`);
+    }
+
+    // 2.2 For each property p of target, in object insertion order as
+    // NOTE: Order is not guaranteed currently
+    for (let key in target) {
+      // 2.2.1 If p equals "default" or conditions contains an entry for p, then
+      if (key === "default" || conditions.some((condition) => condition === key)) {
+        let targetValue = target[key];
+        let resolved = PACKAGE_TARGET_RESOLVE(packageURL, targetValue, patternMatch, isImports, conditions);
+        if (!resolved) {
+          continue;
+        } else {
+          return resolved;
+        }
+      }
+    }
+  } else if (Array.isArray(target)) {
+    // 3.1 If _target.length is zero, return null. (NOTE: Unsure why _target is used instead of target)
+    if (!target.length) return null;
+    for (let targetValue of target) {
+      let resolved;
+      try {
+        resolved = PACKAGE_TARGET_RESOLVE(packageURL, targetValue, patternMatch, isImports, conditions);
+      } catch (err) {
+        // 3.2.1 Let resolved be the result of PACKAGE_TARGET_RESOLVE( packageURL, targetValue, patternMatch, isImports, conditions), continuing the loop on any Invalid Package Target error.
+        if (err instanceof InvalidPackageTarget) {
+          continue;
+        }
+      }
+
+      if (!resolved) {
+        continue;
+      } else {
+        return resolved;
+      }
+    }
+
+    //3.3 Return or throw the last fallback resolution null return or error. (NOTE: Unsure about this part)
+    return null;
+  } else if (!target) {
+    return null;
+  } else {
+    throw InvalidPackageTarget(`Invalid package target: ${target}`);
+  }
+}
+
+function ECMA_262_6_1_7_ARRAY_INDEX(key) {
+  const nonNegativeInteger = /^\d+$/;
+  const MAX_SAFE_INDEX_INTEGER = 2 ** 32 - 2;
+
+  return nonNegativeInteger.test(key) && Number(key) <= MAX_SAFE_INDEX_INTEGER;
 }
 
 function ESM_FILE_FORMAT(url) {
