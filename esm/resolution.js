@@ -354,6 +354,53 @@ function ECMA_262_6_1_7_ARRAY_INDEX(key) {
 }
 
 function ESM_FILE_FORMAT(url) {
+  // 1. Assert: url corresponds to an existing file.
+  if (!fs.existsSync(url)) throw new Error("File does not exist");
+
+  // 2. If url ends in ".mjs", return "module".
+  if (url.endsWith(".mjs")) return "module";
+
+  // 3. If url ends in ".cjs", return "commonjs".
+  if (url.endsWith(".cjs")) return "commonjs";
+
+  // 4. If url ends in ".json", return "json".
+  if (url.endsWith(".json")) return "json";
+
+  // 5. If --experimental-wasm-modules is enabled and url ends in ".wasm", then
+  // TODO
+
+  let packageURL = LOOKUP_PACKAGE_SCOPE(url);
+  let pjson = READ_PACKAGE_JSON(packageURL);
+  let packageType = null;
+
+  // 9. If pjson?.type is "module" or "commonjs",
+  // then set packageType to pjson.type.
+  if (pjson?.type === "module" || pjson?.type === "commonjs") {
+    packageType = pjson.type;
+  }
+
+  if (url.endsWith(".js")) {
+    if (packageType) return packageType;
+    // 10.2 If --experimental-detect-module is enabled and the result of DETECT_MODULE_SYNTAX(source) is true, then return "module"
+    // TODO
+    return "commonjs";
+  }
+
+  // 11. If url does not have any extension, then
+  // NOTE: maybe we could check for valid extensions (.js, .mjs, .cjs, ...)
+  if(!url.includes(".")) {
+    // 11.1 If packageType is "module" and --experimental-wasm-modules is enabled and the file at url contains the header for a WebAssembly module, then return "wasm".
+    // TODO
+
+    if(packageType) return packageType;
+
+    // 11.3 If --experimental-detect-module is enabled and the source of module contains static import or export syntax, then return "module".
+    // TODO
+
+    return "commonjs";
+  }
+
+  // 12. Return undefined (will throw during load phase).
   return;
 }
 
