@@ -1,4 +1,18 @@
-import { ECMA_262_6_1_7_ARRAY_INDEX, READ_PACKAGE_JSON } from "./resolution.js";
+import {
+  DETECT_MODULE_SYNTAX,
+  ECMA_262_6_1_7_ARRAY_INDEX,
+  ESM_FILE_FORMAT,
+  LOOKUP_PACKAGE_SCOPE,
+  PACKAGE_EXPORTS_RESOLVE,
+  PACKAGE_IMPORTS_EXPORTS_RESOLVE,
+  PACKAGE_IMPORTS_RESOLVE,
+  PACKAGE_RESOLVE,
+  PACKAGE_SELF_RESOLVE,
+  PACKAGE_TARGET_RESOLVE,
+  PATTERN_KEY_COMPARE,
+  READ_PACKAGE_JSON,
+  ESM_RESOLVE,
+} from "./resolution.js";
 import { deepStrictEqual, strictEqual, throws } from "node:assert";
 import { describe, it, mock, afterEach } from "node:test";
 import { InvalidPackageConfiguration } from "./errors.js";
@@ -79,4 +93,48 @@ describe(READ_PACKAGE_JSON.name, () => {
 
     deepStrictEqual(READ_PACKAGE_JSON("file:///home/user/project/"), packageJSON);
   });
+});
+
+describe(LOOKUP_PACKAGE_SCOPE.name, () => {
+  it(`TODO`, (t) => t.skip());
+});
+
+describe(ESM_FILE_FORMAT.name, () => {
+  it(`TODO`, (t) => t.skip());
+});
+
+describe(PACKAGE_TARGET_RESOLVE.name, () => {
+  it(`TODO`, (t) => t.skip());
+});
+
+describe(PATTERN_KEY_COMPARE.name, () => {
+  it(`TODO`, (t) => t.skip());
+});
+
+describe(PACKAGE_IMPORTS_EXPORTS_RESOLVE.name, () => {
+  it(`TODO`, (t) => t.skip());
+});
+
+describe(PACKAGE_IMPORTS_RESOLVE.name, () => {
+  it(`TODO`, (t) => t.skip());
+});
+
+describe(PACKAGE_EXPORTS_RESOLVE.name, () => {
+  it(`TODO`, (t) => t.skip());
+});
+
+describe(PACKAGE_SELF_RESOLVE.name, () => {
+  it(`TODO`, (t) => t.skip());
+});
+
+describe(DETECT_MODULE_SYNTAX.name, () => {
+  it(`TODO`, (t) => t.skip());
+});
+
+describe(PACKAGE_RESOLVE.name, () => {
+  it(`TODO`, (t) => t.skip());
+});
+
+describe(ESM_RESOLVE.name, () => {
+  it(`TODO`, (t) => t.skip());
 });
