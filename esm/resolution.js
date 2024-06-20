@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import module from "node:module";
-import { includesAny, isValidURL } from "./helpers";
+import { includesAny, isValidURL } from "./helpers.js";
 import {
   ModuleNotFound,
   InvalidModuleSpecifier,
@@ -9,7 +9,7 @@ import {
   PackageImportNotDefined,
   InvalidPackageConfiguration,
   InvalidPackageTarget,
-} from "./errors";
+} from "./errors.js";
 import * as acorn from "acorn";
 
 const defaultConditions = ["node", "import"];
@@ -360,11 +360,18 @@ function PACKAGE_TARGET_RESOLVE(packageURL, target, patternMatch, isImports, con
   }
 }
 
+/**
+ *
+ * @param {number} key The array index to check for
+ * @returns {boolean} Whether the key is a valid array index or not
+ * @see {@link https://tc39.es/ecma262/#integer-index} ECMA-262 6.1.7 Array Index
+ *
+ */
 function ECMA_262_6_1_7_ARRAY_INDEX(key) {
-  const nonNegativeInteger = /^\d+$/;
-  const MAX_SAFE_INDEX_INTEGER = 2 ** 32 - 2;
-
-  return nonNegativeInteger.test(key) && Number(key) <= MAX_SAFE_INDEX_INTEGER;
+  // Valid array indices are non-negative integers that are in the inclusive range 0 to 2^32 - 2
+  // -0 is not a valid array index
+  if (!Number.isInteger(key)) return false;
+  return key >= 0 && !Object.is(key, -0) && key <= 2 ** 32 - 2;
 }
 
 function ESM_FILE_FORMAT(url) {
