@@ -15,9 +15,21 @@ import * as acorn from "acorn";
 const defaultConditions = ["node", "import"];
 
 /**
- *
+ * @typedef {('commonjs' | 'module' | 'json')} ModuleFormat
+ */
+
+/**
+ * @typedef {Object} ModuleResolution
+ * @prop {string} resolved The resolved URL relative to the parentURL argument passed.
+ * @prop {ModuleFormat} format The module format of the resolved URL
+ */
+
+/**
  * @param {string} specifier
  * @param {string} parentURL
+ * @returns {ModuleResolution} The resolved URL and module format
+ * @description Resolves the specifier relative to the parentURL
+ * @see {@link https://nodejs.org/docs/latest/api/esm.html#esm_resolve} Nodejs docs
  */
 function ESM_RESOLVE(specifier, parentURL) {
   let resolved;
@@ -40,19 +52,19 @@ function ESM_RESOLVE(specifier, parentURL) {
     if (includesAny(resolved, ["%2F", "%5C"])) {
       // 7.1 If resolved contains any percent encodings of "/" or "\" ("%2F" and "%5C" respectively),
       // then throw an Invalid Module Specifier error.
-      throw new InvalidModuleSpecifier(`Found %2F or %5C in resolved URL: ${resolved}`);
+      throw new InvalidModuleSpecifier();
     }
 
     if (fs.existsSync(resolved) && fs.lstatSync(resolved).isDirectory()) {
       // 7.2 If the file at resolved is a directory,
       // then throw an Unsupported Directory Import error.
-      throw new UnsupportedDirectoryImport(`Directory imports are not supported: ${resolved}`);
+      throw new UnsupportedDirectoryImport();
     }
 
     if (!fs.existsSync(resolved)) {
       // 7.3 If the file at resolved does not exist, then
       // throw a Module Not Found error.
-      throw new ModuleNotFound(`Module not found: ${resolved}`);
+      throw new ModuleNotFound();
     }
 
     // 7.4 Set resolved to the real path of resolved, maintaining the same URL querystring and fragment components.
@@ -224,9 +236,9 @@ function PACKAGE_IMPORTS_EXPORTS_RESOLVE(matchKey, matchObj, packageURL, isImpor
     .filter((key) => key.includes("*"))
     .sort(PATTERN_KEY_COMPARE);
 
-  for (let key of expansionKeys) {
+  for (let expansionKey of expansionKeys) {
     // 3.1 Let patternBase be the substring of expansionKey up to but excluding the first "*" character.
-    let patternBase = expansionKeys.split("*")[0];
+    let patternBase = expansionKey.split("*")[0];
 
     // 3.2 If matchKey starts with but is not equal to patternBase, then
     if (matchKey.startsWith(patternBase) && matchKey !== patternBase) {
@@ -239,7 +251,7 @@ function PACKAGE_IMPORTS_EXPORTS_RESOLVE(matchKey, matchObj, packageURL, isImpor
 
         // 3.2.2.2 Let patternMatch be the substring of matchKey starting at the index of the length of patternBase up to the length of matchKey minus the length of patternTrailer.
         let patternMatch = matchKey.slice(patternBase.length, matchKey.length - patternTrailer.length);
-        return PACKAGE_TARGET_RESOLVE(packageURL, target, patternMatch, isIMports, conditions);
+        return PACKAGE_TARGET_RESOLVE(packageURL, target, patternMatch, isImports, conditions);
       }
     }
   }
@@ -467,3 +479,19 @@ function DETECT_MODULE_SYNTAX(source) {
   // TODO
   return false;
 }
+
+export {
+  ESM_RESOLVE,
+  PACKAGE_RESOLVE,
+  PACKAGE_SELF_RESOLVE,
+  PACKAGE_EXPORTS_RESOLVE,
+  PACKAGE_IMPORTS_RESOLVE,
+  PACKAGE_IMPORTS_EXPORTS_RESOLVE,
+  PACKAGE_TARGET_RESOLVE,
+  PATTERN_KEY_COMPARE,
+  ECMA_262_6_1_7_ARRAY_INDEX,
+  ESM_FILE_FORMAT,
+  LOOKUP_PACKAGE_SCOPE,
+  READ_PACKAGE_JSON,
+  DETECT_MODULE_SYNTAX,
+};
