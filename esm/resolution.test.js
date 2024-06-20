@@ -1,35 +1,82 @@
-import { ECMA_262_6_1_7_ARRAY_INDEX } from "./resolution.js";
-import { strictEqual } from "node:assert";
-import { describe, it } from "node:test";
+import { ECMA_262_6_1_7_ARRAY_INDEX, READ_PACKAGE_JSON } from "./resolution.js";
+import { deepStrictEqual, strictEqual, throws } from "node:assert";
+import { describe, it, mock, afterEach } from "node:test";
+import { InvalidPackageConfiguration } from "./errors.js";
+import fs from "node:fs";
 
-describe("ECMA_262_6_1_7_ARRAY_INDEX", () => {
-  it("should reject NaN", () => {
+describe(ECMA_262_6_1_7_ARRAY_INDEX.name, () => {
+  it("should return false for NaN", () => {
     strictEqual(ECMA_262_6_1_7_ARRAY_INDEX(NaN), false);
   });
 
-  it("should reject Infinity values", () => {
+  it("should return false for Infinity values", () => {
     strictEqual(ECMA_262_6_1_7_ARRAY_INDEX(-Infinity), false);
     strictEqual(ECMA_262_6_1_7_ARRAY_INDEX(+Infinity), false);
     strictEqual(ECMA_262_6_1_7_ARRAY_INDEX(Infinity), false);
   });
 
-  it("should reject float numbers", () => {
+  it("should return false for float numbers", () => {
     strictEqual(ECMA_262_6_1_7_ARRAY_INDEX(Math.random()), false);
   });
 
-  it("should reject negative numbers", () => {
+  it("should return false for negative numbers", () => {
     strictEqual(ECMA_262_6_1_7_ARRAY_INDEX(-1), false);
-  })
+  });
 
-  it("should reject integers that are not inside the array indices range", () => {
+  it("should return false for integers that are not inside the array indices range", () => {
     strictEqual(ECMA_262_6_1_7_ARRAY_INDEX(-1), false);
     strictEqual(ECMA_262_6_1_7_ARRAY_INDEX(2 ** 32), false);
     strictEqual(ECMA_262_6_1_7_ARRAY_INDEX(-0), false);
-  })
+  });
 
-  it("should accept integers that are in the array indices range", () => {
+  it("should return true integers that are in the array indices range", () => {
     strictEqual(ECMA_262_6_1_7_ARRAY_INDEX(2 ** 32 - 2), true);
     strictEqual(ECMA_262_6_1_7_ARRAY_INDEX(0), true);
     strictEqual(ECMA_262_6_1_7_ARRAY_INDEX(+0), true);
+  });
+});
+
+describe(READ_PACKAGE_JSON.name, () => {
+  let _existsSync = fs.existsSync;
+  let _readFileSync = fs.readFileSync;
+  afterEach(() => {
+    fs.existsSync = _existsSync;
+    fs.readFileSync = _readFileSync;
+  });
+
+  it("should return null if the package URL can't be resolved", () => {
+    const existsSync = mock.fn(() => false);
+    fs.existsSync = existsSync;
+
+    strictEqual(READ_PACKAGE_JSON("file:///home/user/project/"), null);
+  });
+
+  it("should throw InvalidPackageConfiguration error for invalid json inside the package.json", () => {
+    const existsSync = mock.fn(() => true);
+    const invalidPackageJSON = `{"name": "package1", "version": "1.0.1}`; // missing closing quote
+    const readFileSync = mock.fn(() => invalidPackageJSON);
+    fs.existsSync = existsSync;
+    fs.readFileSync = readFileSync;
+
+    throws(() => READ_PACKAGE_JSON("file:///home/user/project/"), InvalidPackageConfiguration);
+  });
+
+  it("should throw InvalidPackageConfiguration error when the package.json file can't be read", () => {
+    const existsSync = mock.fn(() => true);
+    const readFileSync = mock.fn(() => { throw new Error() }); // prettier-ignore
+    fs.existsSync = existsSync;
+    fs.readFileSync = readFileSync;
+
+    throws(() => READ_PACKAGE_JSON("file:///home/user/project/"), InvalidPackageConfiguration);
+  });
+
+  it("should return the parsed package.json content when the file exists and can be read", () => {
+    const existsSync = mock.fn(() => true);
+    const packageJSON = { name: "package", version: "1.0.1" };
+    const readFileSync = mock.fn(() => JSON.stringify(packageJSON));
+    fs.existsSync = existsSync;
+    fs.readFileSync = readFileSync;
+
+    deepStrictEqual(READ_PACKAGE_JSON("file:///home/user/project/"), packageJSON);
   });
 });

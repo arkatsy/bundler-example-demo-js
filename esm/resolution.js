@@ -445,6 +445,11 @@ function LOOKUP_PACKAGE_SCOPE(url) {
   }
 }
 
+/**
+ *
+ * @param {string} packageURL The base URL of the package
+ * @returns {Object} the parsed package.json file
+ */
 function READ_PACKAGE_JSON(packageURL) {
   let pjsonURL = new URL("package.json", packageURL).toString();
   if (!fs.existsSync(pjsonURL)) return null;
@@ -454,7 +459,7 @@ function READ_PACKAGE_JSON(packageURL) {
     let contents = fs.readFileSync(pjsonURL, "utf-8");
     parsed = JSON.parse(contents);
   } catch (_) {
-    throw new InvalidPackageConfiguration(`Invalid package.json: ${pjsonURL}`);
+    throw new InvalidPackageConfiguration();
   }
 
   return parsed;

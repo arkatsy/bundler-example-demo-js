@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "bundle": "node ./bundler.js ./test/entry.js",
-    "test:esm": "node ./esm/resolution.test.js"
+    "test": "node --test"
   },
   "keywords": [],
   "author": "",
