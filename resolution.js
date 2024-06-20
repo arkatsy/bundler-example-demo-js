@@ -446,7 +446,7 @@ function LOOKUP_PACKAGE_SCOPE(url) {
 }
 
 /**
- *
+ * @description Parses the package.json file at the given packageURL
  * @param {string} packageURL The base URL of the package
  * @returns {Object} the parsed package.json file
  */
