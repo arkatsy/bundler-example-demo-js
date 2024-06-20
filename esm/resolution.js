@@ -155,7 +155,7 @@ function PACKAGE_RESOLVE(packageSpecifier, parentURL) {
 }
 
 function PACKAGE_SELF_RESOLVE(packageName, packageSubpath, parentURL) {
-  let packageURL = LOOK_UP_PACKAGE_JSON(parentURL);
+  let packageURL = LOOKUP_PACKAGE_SCOPE(parentURL);
   if (!packageURL) return;
 
   let pjson = READ_PACKAGE_JSON(parentURL);
